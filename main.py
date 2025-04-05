@@ -1,8 +1,8 @@
+from pyexpat import model
 import tkinter as tk
 from PIL import Image, ImageDraw, ImageOps
 import numpy as np
-import tensorflow as tf
-from tf.keras.models import load_model   # type: ignore
+from tensorflow.keras.models import load_model   # type: ignore
 
 # Load your pre-trained MNIST model
 
