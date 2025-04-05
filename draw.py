@@ -7,8 +7,8 @@ from tensorflow.keras.models import load_model
 
 
 # Set up the drawing board dimensions
-CANVAS_WIDTH = 200
-CANVAS_HEIGHT = 200
+CANVAS_WIDTH = 400
+CANVAS_HEIGHT = 400
 
 # Create the main window
 root = tk.Tk()
