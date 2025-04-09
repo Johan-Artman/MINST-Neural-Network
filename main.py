@@ -4,7 +4,41 @@ from PIL import Image, ImageDraw, ImageOps
 import numpy as np
 from tensorflow.keras.models import load_model   # type: ignore
 
-# Load your pre-trained MNIST model
+#load model
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+        
+def sigmoid_derivative(x):
+    return sigmoid(x) * (1 - sigmoid(x))
+        
+class NeuralNetwork:
+    def __init__(self, input_size, hidden_size, output_size):
+        # Initialize weights for input-to-hidden and hidden-to-output layers
+        self.weights_hidden_input = np.random.randn(input_size, hidden_size)
+        self.weights_hidden_output = np.random.randn(hidden_size, output_size)
+
+    def forward(self, x):
+        # Compute hidden layer activation
+        self.hidden_input = np.dot(x, self.weights_hidden_input)
+        self.hidden_output = sigmoid(self.hidden_input)
+        # Compute output layer activation
+        self.final_input = np.dot(self.hidden_output, self.weights_hidden_output)
+        self.final_output = sigmoid(self.final_input)
+        return self.final_output
+    
+    #load model weights from trainig
+def load_model_weights(nn, filename="custom_nn_weights.npz"):
+        data = np.load(filename)
+        nn.weights_hidden_input = data["weights_hidden_input"]
+        nn.weights_hidden_output = data["weights_hidden_output"]
+        print(f"Model weights loaded from {filename}")
+
+input_size = 28 * 28
+hidden_size = 64      # Note to self should match what was used during training.
+output_size = 10
+
+nn = NeuralNetwork(input_size, hidden_size, output_size)
+load_model_weights(nn, "custom_nn_weights.npz")
 
 
 # Set up the drawing board dimensions
