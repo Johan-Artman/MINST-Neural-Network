@@ -1,4 +1,3 @@
-from pyexpat import model
 import tkinter as tk
 from PIL import Image, ImageDraw, ImageOps
 import numpy as np
@@ -8,33 +7,58 @@ from tensorflow.keras.models import load_model   # type: ignore
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
         
-def sigmoid_derivative(x):
-    return sigmoid(x) * (1 - sigmoid(x))
+def sigmoid_derivative_from_output(s):
+    return s * (1 - s)
         
+
+def softmax(x):
+    exp_x = np.exp(x - np.max(x, axis=1, keepdims=True))
+    return exp_x / np.sum(exp_x, axis=1, keepdims=True)
+
+def cross_entropy_loss(y_true, y_pred):
+    # Clip values for numerical stability to avoid log(0)
+    eps = 1e-12
+    y_pred = np.clip(y_pred, eps, 1.0 - eps)
+    # Compute cross entropy loss for m samples
+    m = y_true.shape[0]
+    loss = -np.sum(y_true * np.log(y_pred)) / m
+    return loss
+
 class NeuralNetwork:
     def __init__(self, input_size, hidden_size, output_size):
-        # Initialize weights for input-to-hidden and hidden-to-output layers
-        self.weights_hidden_input = np.random.randn(input_size, hidden_size)
-        self.weights_hidden_output = np.random.randn(hidden_size, output_size)
+        # Xavier Initialization for weights
+        limit_hidden = np.sqrt(6 / (input_size + hidden_size))
+        self.weights_hidden_input = np.random.uniform(-limit_hidden, limit_hidden, (input_size, hidden_size))
+        limit_output = np.sqrt(6 / (hidden_size + output_size))
+        self.weights_hidden_output = np.random.uniform(-limit_output, limit_output, (hidden_size, output_size))
+        
+        # Add biases
+        self.bias_hidden = np.zeros((1, hidden_size))
+        self.bias_output = np.zeros((1, output_size))
 
     def forward(self, x):
-        # Compute hidden layer activation
-        self.hidden_input = np.dot(x, self.weights_hidden_input)
+        # calculate hidden layer weight
+        self.hidden_input = np.dot(x, self.weights_hidden_input) + self.bias_hidden
         self.hidden_output = sigmoid(self.hidden_input)
-        # Compute output layer activation
-        self.final_input = np.dot(self.hidden_output, self.weights_hidden_output)
-        self.final_output = sigmoid(self.final_input)
+        
+        # calc output
+        self.final_input = np.dot(self.hidden_output, self.weights_hidden_output) + self.bias_output
+        self.final_output = softmax(self.final_input)
         return self.final_output
-    
+
     #load model weights from trainig
 def load_model_weights(nn, filename="custom_nn_weights.npz"):
-        data = np.load(filename)
-        nn.weights_hidden_input = data["weights_hidden_input"]
-        nn.weights_hidden_output = data["weights_hidden_output"]
-        print(f"Model weights loaded from {filename}")
+    data = np.load(filename)
+    nn.weights_hidden_input = data["weights_hidden_input"]
+    nn.weights_hidden_output = data["weights_hidden_output"]
+    if "bias_hidden" in data:
+        nn.bias_hidden = data["bias_hidden"]
+    if "bias_output" in data:
+        nn.bias_output = data["bias_output"]
+    print(f"Model weights loaded from {filename}")
 
 input_size = 28 * 28
-hidden_size = 64      # Note to self should match what was used during training.
+hidden_size = 128      # Note to self should match what was used during training.
 output_size = 10
 
 nn = NeuralNetwork(input_size, hidden_size, output_size)
@@ -79,10 +103,10 @@ def predict_digit():
     # Convert image to a numpy array and normalize pixel values
     img_arr = np.array(img) / 255.0
     # Reshape to match the model's expected input shape (batch, height, width, channels)
-    img_arr = img_arr.reshape(1, 28, 28, 1)
+    img_arr = img_arr.reshape(1, 28 * 28)
     
     # Make prediction with the model
-    prediction = model.predict(img_arr)
+    prediction = nn.forward(img_arr)
     digit = np.argmax(prediction)
     print("Predicted digit:", digit)
 
