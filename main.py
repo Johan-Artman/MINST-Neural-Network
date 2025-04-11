@@ -58,7 +58,7 @@ def load_model_weights(nn, filename="custom_nn_weights.npz"):
     print(f"Model weights loaded from {filename}")
 
 input_size = 28 * 28
-hidden_size = 128      # Note to self should match what was used during training.
+hidden_size = 256      # Note to self should match what was used during training.
 output_size = 10
 
 nn = NeuralNetwork(input_size, hidden_size, output_size)
