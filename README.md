@@ -3,4 +3,4 @@ Trained using a custom model in NumPy (with Xavier initialization, biases, softm
 
 you can access the MNIST dataset here: https://www.kaggle.com/datasets/hojjatk/mnist-dataset
 
-TODO: improve accuarcy, its really bad at generalizing right now. Add more markdown cells to show thoughtprocess and so forth, switch sigmoid to ReLU maybe? 
+TODO: improve accuarcy, its really bad at generalizing right now. Add more markdown cells to show thoughtprocess and so forth
