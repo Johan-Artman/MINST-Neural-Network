@@ -1,6 +1,6 @@
 import numpy as np
-from keras.datasets import mnist
-from keras.utils import np_utils
+from keras.datasets import mnist # type: ignore
+from keras.utils import np_utils # type: ignore
 
 from dense import Dense
 from convolutional import Convolutional
