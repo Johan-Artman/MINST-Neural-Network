@@ -3,10 +3,6 @@ import ctypes
 from ctypes import c_int, byref
 from ctypes.util import find_library
 
-os.add_dll_directory(r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.9\bin\cudart64_12.dll")
-
-
-
 
 def test_cuda_runtime():
     # 1) Försök hitta cudart‐biblioteket
