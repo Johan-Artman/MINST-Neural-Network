@@ -1,5 +1,5 @@
 A simple neural network for recognizing handwritten digits from the MNIST dataset. 
-Trained using a custom model in NumPy (with Xavier initialization, biases, softmax activation, and cross-entropy loss) and deployed via a Tkinter GUI where users can draw digits.
+Trained using a custom model in NumPy (with Xavier initialization, biases, softmax activation, and cross-entropy loss) and deployed via a Tkinter GUI where users can draw digits. The predicted digit now appears directly in the window after pressing **Predict**.
 
 you can access the MNIST dataset here: https://www.kaggle.com/datasets/hojjatk/mnist-dataset
 

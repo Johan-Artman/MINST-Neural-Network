@@ -1,7 +1,6 @@
 import tkinter as tk
 from PIL import Image, ImageDraw, ImageOps
 import numpy as np
-from tensorflow.keras.models import load_model   # type: ignore
 
 #load model
 def sigmoid(x):
@@ -109,6 +108,7 @@ def predict_digit():
     prediction = nn.forward(img_arr)
     digit = np.argmax(prediction)
     print("Predicted digit:", digit)
+    result_label.config(text=f"Predicted digit: {digit}")
 
 # Bind mouse drag event to the paint function
 canvas.bind("<B1-Motion>", paint)
@@ -122,6 +122,10 @@ clear_button.pack(side="left", padx=10, pady=10)
 
 predict_button = tk.Button(button_frame, text="Predict", command=predict_digit)
 predict_button.pack(side="left", padx=10, pady=10)
+
+# Label to display the prediction result
+result_label = tk.Label(root, text="Draw a digit and press Predict")
+result_label.pack(pady=10)
 
 # Run the Tkinter main loop
 root.mainloop()
