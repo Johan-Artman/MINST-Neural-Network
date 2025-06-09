@@ -1,69 +1,41 @@
 import tkinter as tk
 from PIL import Image, ImageDraw, ImageOps
 import numpy as np
-from tensorflow.keras.models import load_model   # type: ignore
+import torch
+import torch.nn as nn
 
-#load model
-def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
-        
-def sigmoid_derivative_from_output(s):
-    return s * (1 - s)
-        
-
-def softmax(x):
-    exp_x = np.exp(x - np.max(x, axis=1, keepdims=True))
-    return exp_x / np.sum(exp_x, axis=1, keepdims=True)
-
-def cross_entropy_loss(y_true, y_pred):
-    # Clip values for numerical stability to avoid log(0)
-    eps = 1e-12
-    y_pred = np.clip(y_pred, eps, 1.0 - eps)
-    # Compute cross entropy loss for m samples
-    m = y_true.shape[0]
-    loss = -np.sum(y_true * np.log(y_pred)) / m
-    return loss
-
-class NeuralNetwork:
-    def __init__(self, input_size, hidden_size, output_size):
-        # Xavier Initialization for weights
-        limit_hidden = np.sqrt(6 / (input_size + hidden_size))
-        self.weights_hidden_input = np.random.uniform(-limit_hidden, limit_hidden, (input_size, hidden_size))
-        limit_output = np.sqrt(6 / (hidden_size + output_size))
-        self.weights_hidden_output = np.random.uniform(-limit_output, limit_output, (hidden_size, output_size))
-        
-        # Add biases
-        self.bias_hidden = np.zeros((1, hidden_size))
-        self.bias_output = np.zeros((1, output_size))
+# Create the same CNN model as in gpu_test.py
+class SimpleCNN(nn.Module):
+    def __init__(self):
+        super(SimpleCNN, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=5, kernel_size=3, padding=1)
+        self.sigmoid = nn.Sigmoid()
+        self.fc1 = nn.Linear(5 * 28 * 28, 100)
+        self.fc2 = nn.Linear(100, 10)
 
     def forward(self, x):
-        # calculate hidden layer weight
-        self.hidden_input = np.dot(x, self.weights_hidden_input) + self.bias_hidden
-        self.hidden_output = sigmoid(self.hidden_input)
-        
-        # calc output
-        self.final_input = np.dot(self.hidden_output, self.weights_hidden_output) + self.bias_output
-        self.final_output = softmax(self.final_input)
-        return self.final_output
+        x = self.conv1(x)
+        x = self.sigmoid(x)
+        x = x.view(-1, 5 * 28 * 28)
+        x = self.fc1(x)
+        x = self.sigmoid(x)
+        x = self.fc2(x)
+        x = self.sigmoid(x)
+        return x
 
-    #load model weights from trainig
-def load_model_weights(nn, filename="custom_nn_weights.npz"):
-    data = np.load(filename)
-    nn.weights_hidden_input = data["weights_hidden_input"]
-    nn.weights_hidden_output = data["weights_hidden_output"]
-    if "bias_hidden" in data:
-        nn.bias_hidden = data["bias_hidden"]
-    if "bias_output" in data:
-        nn.bias_output = data["bias_output"]
-    print(f"Model weights loaded from {filename}")
+# Check if CUDA is available
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(f"Using device: {device}")
 
-input_size = 28 * 28
-hidden_size = 256      # Note to self should match what was used during training.
-output_size = 10
-
-nn = NeuralNetwork(input_size, hidden_size, output_size)
-load_model_weights(nn, "custom_nn_weights.npz")
-
+# Create model and load weights
+model = SimpleCNN().to(device)
+try:
+    model.load_state_dict(torch.load('gpu_trained_model.pth'))
+    model.eval()  # Set to evaluation mode
+    print("Successfully loaded trained model")
+except FileNotFoundError:
+    print("No trained model found. Please run gpu_test.py first to train the model.")
+    exit(1)
 
 # Set up the drawing board dimensions
 CANVAS_WIDTH = 400
@@ -102,13 +74,16 @@ def predict_digit():
     img = ImageOps.invert(img)
     # Convert image to a numpy array and normalize pixel values
     img_arr = np.array(img) / 255.0
-    # Reshape to match the model's expected input shape (batch, height, width, channels)
-    img_arr = img_arr.reshape(1, 28 * 28)
+    # Convert to PyTorch tensor and reshape
+    img_tensor = torch.FloatTensor(img_arr).reshape(1, 1, 28, 28).to(device)
     
     # Make prediction with the model
-    prediction = nn.forward(img_arr)
-    digit = np.argmax(prediction)
-    print("Predicted digit:", digit)
+    with torch.no_grad():
+        output = model(img_tensor)
+        probabilities = output.cpu().numpy()[0]
+        digit = np.argmax(probabilities)
+        confidence = probabilities[digit] * 100
+        print(f"Predicted digit: {digit} (confidence: {confidence:.2f}%)")
 
 # Bind mouse drag event to the paint function
 canvas.bind("<B1-Motion>", paint)
