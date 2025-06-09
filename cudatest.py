@@ -3,7 +3,11 @@ import ctypes
 from ctypes import c_int, byref
 from ctypes.util import find_library
 
-os.add_dll_directory(r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.9\bin\cudart64_12.dll")
+# On Windows, ensure the CUDA runtime DLL directory is added to the search path
+if os.name == "nt" and hasattr(os, "add_dll_directory"):
+    os.add_dll_directory(
+        r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.9\bin"
+    )
 
 
 
